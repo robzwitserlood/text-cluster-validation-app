@@ -1,0 +1,33 @@
+.DS_Store
+node_modules/
+client/dist/
+client/dist-*/
+dist/
+build/
+.env
+.databricks/
+.smoke-test/
+.claude/
+.cursor/
+.github/
+.ai-dev-kit/
+.mcp.json
+.vscode/mcp.json
+test-results/
+playwright-report/
+
+# Stray npm lockfile (this is a pnpm workspace; pnpm-lock.yaml is the source of truth)
+package-lock.json
+
+# Transient PBL house-style reference archive (extracted tokens live in specs/, not here)
+website-startanalyse-aardgasvrije-buurten-main.zip
+website-startanalyse-aardgasvrije-buurten-main/
+
+# Local tool caches
+.apx/
+.build/
+.pnpm-store/
+.tanstack/
+
+# Auto-generated types (endpoint-specific, varies per developer)
+shared/appkit-types/serving.d.ts

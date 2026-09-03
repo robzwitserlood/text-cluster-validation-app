@@ -1,0 +1,343 @@
+@import '@databricks/appkit-ui/styles.css';
+@plugin '@tailwindcss/typography';
+
+/*
+ * PBL house-style alignment (US4, FR-010) — maps `specs/003-survey-copy-house-style/design-tokens.md`
+ * onto the existing AppKit `:root` theme-token layer. Presentation only: no component, behaviour,
+ * accessibility, or recorded-data change. Ground-truth reference: https://startanalyse.pbl.nl/.
+ * Verified contrast: body #242424 on background #fbfbfb (~13:1, AAA); white on primary #007bc7
+ * (~4:1, meets AA for the bold/large button text); visible keyboard focus uses #000000 (--ring).
+ *
+ * Font note (design-tokens.md): RO Sans / RO Serif are licensed Rijkshuisstijl fonts — the binaries
+ * are NOT committed. The stack names them first (renders only where locally installed) and falls
+ * back to the bundled Fira Sans — the open substitute the Rijkshuisstijl Community design system
+ * standardises on (@rijkshuisstijl-community/font, Fira Sans is OFL-1.1) — then Verdana. The serif
+ * side has no community substitute (their system sets even headings in sans), so it falls back to
+ * Times New Roman, matching the reference site's own fallback stack.
+ */
+
+/*
+ * Fira Sans @font-face — woff2 subsets copied from @rijkshuisstijl-community/font v1.1.6
+ * (client/public/fonts/). Latin + Latin-Extended subsets cover Dutch (incl. IJ/ij digraphs);
+ * weights limited to those the UI uses: 400 (+italic), 500, 600, 700.
+ */
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/fira-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/fira-sans-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/fira-sans-latin-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/fira-sans-latin-ext-400-italic.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/fira-sans-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/fira-sans-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('/fonts/fira-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('/fonts/fira-sans-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/fira-sans-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/fira-sans-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --font-sans: 'RijksoverheidSans', 'Fira Sans', Verdana, sans-serif;
+  --font-serif: 'RijksoverheidSerif', 'Times New Roman', serif;
+
+  /* Surfaces / text */
+  --background: #fbfbfb;
+  --foreground: #242424;
+  --card: #ffffff;
+  --card-foreground: #242424;
+  --popover: #ffffff;
+  --popover-foreground: #242424;
+
+  /* Rijkshuisstijl link-blue primary + accent tint. Hover/active shades come from the
+   * Rijkshuisstijl Community donkerblauw scale (500/600) — #007bc7 ≈ their hemelblauw-500,
+   * which has no darker steps, so interaction states step into the adjacent donkerblauw hue
+   * exactly as their link tokens do. */
+  --primary: #007bc7;
+  --primary-foreground: #ffffff;
+  --primary-hover: oklch(49.37% 0.11351 240.39);
+  --primary-active: oklch(38.54% 0.0857 238.6);
+  --secondary: #eeece8;
+  --secondary-foreground: #242424;
+  --muted: #f5f5f5;
+  --muted-foreground: #535353;
+  --accent: #d9ebf7;
+  --accent-foreground: #242424;
+
+  /* Borders / inputs / focus */
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #000000;
+
+  /*
+   * Corner radius — Rijkshuisstijl Community design-token values
+   * (@rijkshuisstijl-community/design-tokens: --rhc-border-radius-sm: 2.5px for inputs/checkboxes,
+   * --rhc-border-radius-md: 5px for buttons/cards). Overrides Tailwind's static radius scale so all
+   * components read near-square, coherent with the sharp-cornered Rijksoverheid ribbon logo and the
+   * PBL web estate (pbl.nl / startanalyse.pbl.nl), without the starkness of fully square corners.
+   * `rounded-full` (pills, radio dots) is intentionally left untouched.
+   */
+  --radius: 5px;
+  --radius-xs: 2.5px;
+  --radius-sm: 2.5px;
+  --radius-md: 5px;
+  --radius-lg: 5px;
+  --radius-xl: 5px;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/*
+ * Primary-button interaction states — replaces shadcn's generic `hover:bg-primary/90` opacity
+ * fade with the Rijkshuisstijl Community token shades (unlayered, so it wins over the layered
+ * Tailwind utilities). Disabled buttons are unaffected (`disabled:pointer-events-none`).
+ */
+button.bg-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+button.bg-primary:active {
+  background-color: var(--primary-active);
+}
+
+/*
+ * Masthead publisher block (US4, FR-010) — a faithful copy of the reference site's
+ * `block-sitebranding__publisher` rules (https://startanalyse.pbl.nl/, same rem values and
+ * breakpoints: 48em / 64em / 85.375em). The Rijksoverheid ribbon (50×100 SVG) hangs from the top
+ * edge, centred on the viewport (`50%` minus half the ribbon width), publisher name to its right.
+ */
+.pbl-masthead__publisher {
+  display: flex;
+  margin-left: calc(50% - 1.25rem);
+}
+
+.pbl-masthead__publisher-logo {
+  align-self: flex-start;
+  display: block;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: auto;
+  margin-bottom: 0.625rem;
+}
+
+.pbl-masthead__publisher-name {
+  align-self: center;
+  color: #000;
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 0.75rem;
+  line-height: 1.1666666667;
+  margin-left: 0.5rem;
+  max-width: 10rem;
+}
+
+@media (min-width: 48em) {
+  .pbl-masthead__publisher {
+    margin-left: calc(50% - 1.40625rem);
+  }
+  .pbl-masthead__publisher-logo {
+    margin-bottom: 1.4375rem;
+    width: 2.8125rem;
+  }
+  .pbl-masthead__publisher-name {
+    font-size: 0.875rem;
+    line-height: 1.1428571;
+    margin-left: 0.75rem;
+    max-width: 14.5rem;
+  }
+}
+
+@media (min-width: 64em) {
+  .pbl-masthead__publisher-name {
+    font-size: 1rem;
+    line-height: 1.125;
+  }
+}
+
+@media (min-width: 85.375em) {
+  .pbl-masthead__publisher {
+    margin-left: calc(50% - 1.5625rem);
+  }
+  .pbl-masthead__publisher-logo {
+    margin-bottom: 1.5625rem;
+    width: 3.125rem;
+  }
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+}
+
+/* Keep Markdown introductions consistent with the app theme while retaining Typography's prose
+ * treatment for authored structure. The plugin defaults target long-form articles and otherwise
+ * introduce much larger vertical gaps than the surrounding AppKit card. */
+.welcome-prose {
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-kbd: var(--foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.welcome-prose :where(h1, h2, h3, h4) {
+  font-family: var(--font-sans);
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+.welcome-prose :where(p, ul, ol, blockquote, pre, table) {
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.welcome-prose :where(li) {
+  margin-bottom: 0.125rem;
+  margin-top: 0.125rem;
+}
+
+.welcome-prose > :first-child {
+  margin-top: 0;
+}
+
+.welcome-prose > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * Dark mode — Rijkshuisstijl Community dark-theme token values
+ * (@rijkshuisstijl-community/design-tokens dark scales): surfaces/text from the dark cool-grey
+ * scale (50/100/200/300 surfaces and borders, 700/900 text), primary from dark hemelblauw-500
+ * with hover/active stepping into dark donkerblauw-600/700 (lighter on dark, mirroring the
+ * light-mode pattern), accent tint from dark hemelblauw-200. Focus ring flips to white.
+ *
+ * Selector note: AppKit ships its own dark defaults under `:root:not(.light)` (specificity 0,2,0),
+ * which would beat a plain `:root` here regardless of source order — so this block matches that
+ * selector exactly and wins on source order instead.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: oklch(10% 0.00341 247.86);
+    --foreground: oklch(90% 0.03982 265.75);
+    --card: oklch(15% 0.00685 247.9);
+    --card-foreground: oklch(90% 0.03982 265.75);
+    --popover: oklch(15% 0.00685 247.9);
+    --popover-foreground: oklch(90% 0.03982 265.75);
+    --primary: oklch(65% 0.1475 246.59);
+    --primary-foreground: oklch(10% 0.00341 247.86);
+    --primary-hover: oklch(70% 0.0857 238.6);
+    --primary-active: oklch(75% 0.0666 242.1);
+    --secondary: oklch(20% 0.01262 255.51);
+    --secondary-foreground: oklch(90% 0.03982 265.75);
+    --muted: oklch(20% 0.01262 255.51);
+    --muted-foreground: oklch(75% 0.03916 257.29);
+    --accent: oklch(20% 0.07586 236.92);
+    --accent-foreground: oklch(90% 0.03982 265.75);
+    --border: oklch(30% 0.01985 252.89);
+    --input: oklch(30% 0.01985 252.89);
+    --ring: oklch(100% 0 0);
+  }
+
+  /* The reference site's publisher name is hard #000 (it has no dark mode); follow the theme. */
+  .pbl-masthead__publisher-name {
+    color: var(--foreground);
+  }
+}

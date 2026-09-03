@@ -1,0 +1,67 @@
+bundle:
+  name: clustering-app
+
+variables:
+  files_path:
+    description: >-
+      Volume path for file storage (e.g. /Volumes/catalog/schema/volume_name). The app writes all
+      data under <files_path>/text_cluster_validation/<STUDY_ID>/ — one shared root, one subdir per
+      Study (FR-017). STUDY_ID is set per deployment in app.yaml.
+  files_id:
+    description: Permission to write to volumes
+
+resources:
+  apps:
+    app:
+      name: 'human-val-text-analysis'
+      description: >-
+        Human validation text analysis. Collects human validation (word- and
+        cluster-intrusion judgments) of automatically generated text clusters and stores
+        submitted responses in Unity Catalog Volumes.
+      source_code_path: ./
+
+      # No user_api_scopes: the app never uses on-behalf-of (OBO) access — it reads/writes the
+      # Volume only as its own service principal (R9, server/src/lib/servicePrincipalStorage.ts).
+      # Declaring an OBO scope here would make Databricks show every visitor an "act on your
+      # behalf" consent screen, which FR-013 explicitly does not want.
+
+      # Any workspace user may open the app link (FR-013: participants need no separate
+      # authentication beyond reaching the app itself). The explicit CAN_MANAGE grant below
+      # keeps the deployer able to manage the app under the prod target's `mode: production`,
+      # which (unlike dev) does not implicitly grant the deploying/run_as identity access.
+      permissions:
+        - group_name: users
+          level: CAN_USE
+        - user_name: zwitserlor@pbl.nl
+          level: CAN_MANAGE
+
+      # The resources which this app has access to.
+      resources:
+        - name: files
+          uc_securable:
+            securable_full_name: ${var.files_id}
+            securable_type: VOLUME
+            permission: WRITE_VOLUME
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://adb-8079947826164900.0.azuredatabricks.net
+
+    variables:
+      files_path: /Volumes/${bundle.target}/raw/landing
+      files_id: ${bundle.target}.raw.landing
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-1950762428877393.13.azuredatabricks.net
+      root_path: /Workspace/Users/zwitserlor@pbl.nl/.bundle/${bundle.name}/${bundle.target}
+
+    run_as:
+      user_name: zwitserlor@pbl.nl
+
+    variables:
+      files_path: /Volumes/${bundle.target}/raw/landing
+      files_id: ${bundle.target}.raw.landing
