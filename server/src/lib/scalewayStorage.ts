@@ -25,7 +25,19 @@ export function createScalewayStorage(config: {
     region: config.region,
     endpoint: config.endpoint,
     forcePathStyle: true,
+    credentials: { accessKeyId: '', secretAccessKey: '' },
   });
+
+  client.middlewareStack.add(
+    (next) => (args) => {
+      if (args.request?.headers) {
+        delete args.request.headers['authorization'];
+        delete args.request.headers['x-amz-content-sha256'];
+      }
+      return next(args);
+    },
+    { step: 'finalizeRequest', name: 'removeAuth', priority: 'high' }
+  );
 
   const { bucket } = config;
 
