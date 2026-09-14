@@ -8,13 +8,13 @@
  * generic and PII-free (R10).
  */
 
-import type { IAppRouter } from '@databricks/appkit';
+import type { Express } from 'express';
 import { isValidParticipantId } from '../../../shared/schemas';
 import { sendError } from '../lib/http';
 import { buildDebrief, DebriefError } from '../services/sessionService';
 import type { RouteDeps } from './session';
 
-export function registerDebriefRoutes(app: IAppRouter, deps: RouteDeps): void {
+export function registerDebriefRoutes(app: Express, deps: RouteDeps): void {
   app.get('/api/debrief', async (req, res) => {
     const participantId = req.header('X-Participant-Id');
     if (!isValidParticipantId(participantId)) return sendError(res, 400, 'invalid_participant');

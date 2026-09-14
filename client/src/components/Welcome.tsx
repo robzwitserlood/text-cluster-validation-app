@@ -1,4 +1,5 @@
-import { Button, Card, CardContent } from '@databricks/appkit-ui/react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import Markdown from 'react-markdown';
 import type { WelcomeContent } from '../../../shared/types';
 import { useTranslate } from '@/lib/i18n-context';
@@ -10,7 +11,7 @@ import { useTranslate } from '@/lib/i18n-context';
  * Markdown introduction and a single keyboard-reachable Begin control that advances into the flow. The
  * introduction comes from the server-resolved `welcome` copy and is rendered as authored (never
  * translated, FR-015); only the Begin label is looked up in the deployment language via `t()`. The
- * page reveals no task answers or ground truth (FR-004). Built from `@databricks/appkit-ui` with a
+ * page reveals no task answers or ground truth (FR-004). Built from shadcn/ui with a
  * visible focus ring on Begin so the whole page is completable by keyboard (FR-010, Constitution I).
  */
 

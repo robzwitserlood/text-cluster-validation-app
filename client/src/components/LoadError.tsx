@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Alert, AlertDescription, AlertTitle, Button } from '@databricks/appkit-ui/react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { TriangleAlert } from 'lucide-react';
 import { useTranslate } from '@/lib/i18n-context';
 

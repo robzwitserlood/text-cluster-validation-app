@@ -1,19 +1,25 @@
+# Text Cluster Validation Survey
 
-<!-- appkit-instructions-start -->
+A standalone local survey application for text cluster intrusion validation.
 
-## Databricks AppKit
+## Architecture
 
-This project uses Databricks AppKit packages. For AI assistant guidance on using these packages, refer to:
+- **Server**: Express API with S3-compatible object storage (Scaleway)
+- **Client**: React SPA with shadcn/ui components, TanStack Router, Tailwind CSS
+- **Shared**: TypeScript types, Zod schemas, and i18n strings
 
-- **@databricks/appkit** (Backend SDK): [./node_modules/@databricks/appkit/CLAUDE.md](./node_modules/@databricks/appkit/CLAUDE.md)
-- **@databricks/appkit-ui** (UI Integration, Charts, Tables, SSE, and more.): [./node_modules/@databricks/appkit-ui/CLAUDE.md](./node_modules/@databricks/appkit-ui/CLAUDE.md)
+## Getting Started
 
-### Databricks Skills
+```bash
+npm install
+cp .env.example .env  # Configure your Scaleway bucket
+npm run dev            # Open http://localhost:3001
+```
+
+## Skills
 
 For enhanced AI assistance with Databricks CLI operations, authentication, data exploration, and app development, install the Databricks skills:
 
 ```bash
 databricks experimental aitools install
 ```
-
-<!-- appkit-instructions-end -->

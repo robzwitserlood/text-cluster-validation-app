@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Two harness instances back the specs so the deployment-language slice (US3) can be exercised
  * end-to-end. Each `webServer` boots the self-contained e2e harness (tests/e2e/harness.ts) — it
  * builds the client once, then serves the built SPA plus the real participant API over an in-memory
- * study, so the navigation specs run with no Databricks workspace:
+ * study, so the navigation specs run with no external infrastructure:
  *
  *  - `chromium` (English, `SURVEY_LANGUAGE=en`) runs the whole flow but skips the `@nl` test;
  *  - `chromium-nl` (Dutch, `SURVEY_LANGUAGE=nl`) runs only the `@nl` deployment-language test.
@@ -14,7 +14,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Set `BASE_URL` to point at an already-running deployment instead (then both harnesses are
  * skipped); in that mode only the default-language project runs.
  */
-const EN_PORT = Number(process.env.DATABRICKS_APP_PORT ?? 8000);
+const EN_PORT = Number(process.env.PORT ?? 8000);
 const NL_PORT = EN_PORT + 1;
 
 const usingExternalBaseUrl = Boolean(process.env.BASE_URL);

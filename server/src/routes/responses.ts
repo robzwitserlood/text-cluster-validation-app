@@ -9,7 +9,7 @@
  * cluster submission while the cluster segment is locked (FR-022).
  */
 
-import type { IAppRouter } from '@databricks/appkit';
+import type { Express } from 'express';
 import { isValidParticipantId, SubmitRequestSchema } from '../../../shared/schemas';
 import type { SubmitResult } from '../../../shared/types';
 import { parseAcknowledgedInstructions, sendError } from '../lib/http';
@@ -17,7 +17,7 @@ import { ensureAssignment, getSessionState, type ServiceContext } from '../servi
 import { recordResponse, ResponseError } from '../services/responseService';
 import type { RouteDeps } from './session';
 
-export function registerResponseRoutes(app: IAppRouter, deps: RouteDeps): void {
+export function registerResponseRoutes(app: Express, deps: RouteDeps): void {
   app.post('/api/responses', async (req, res) => {
     const participantId = req.header('X-Participant-Id');
     if (!isValidParticipantId(participantId)) return sendError(res, 400, 'invalid_participant');

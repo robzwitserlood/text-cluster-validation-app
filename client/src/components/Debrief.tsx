@@ -1,4 +1,4 @@
-import { Badge } from '@databricks/appkit-ui/react';
+import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, GraduationCap, XCircle } from 'lucide-react';
 import type { DebriefExample } from '../../../shared/types';
 import { useTranslate } from '@/lib/i18n-context';

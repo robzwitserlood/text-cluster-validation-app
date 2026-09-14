@@ -11,7 +11,7 @@ declare global {
  * Smoke / e2e flow (T045, Phase 9 — R13, SC-006/SC-008, FR-021).
  *
  * Drives the real React client against the e2e harness (tests/e2e/harness.ts), which serves the
- * genuine participant API over an in-memory Volume seeded with a fixed study. Covers:
+ * genuine participant API over an in-memory storage seeded with a fixed study. Covers:
  *
  *  - the full guided flow: word instructions → 2 practice → 2 word items → cluster instructions →
  *    2 practice → 1 cluster item → completion + debrief;

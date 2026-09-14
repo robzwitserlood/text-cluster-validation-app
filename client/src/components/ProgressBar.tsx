@@ -1,4 +1,4 @@
-import { Progress } from '@databricks/appkit-ui/react';
+import { Progress } from '@/components/ui/progress';
 import { useMessages } from '@/lib/i18n-context';
 
 /**

@@ -94,13 +94,7 @@ export interface Messages {
   closingTitle: string;
   closingBody: string;
 
-  // Branded page chrome (US4, FR-010/FR-010a). The presentation-only masthead + footer band that
-  // wrap every participant-facing screen. `chromeLogoAlt` is the alt text of the Rijksoverheid
-  // ribbon logo in the masthead; `chromePublisherName` is the visible publisher name shown next to
-  // it; `chromeFooterAttribution` is branding-only footer copy (no clickable outbound links).
-  chromeLogoAlt: string;
-  chromePublisherName: string;
-  chromeFooterAttribution: string;
+  appTitle: string;
 
   /**
    * System-generated, cluster-framed explanation for a WORD item, chosen by `correct`
@@ -176,12 +170,10 @@ const en: Messages = {
   debriefCorrect: 'Correct',
   debriefIncorrect: 'Not the intruder',
   debriefPreparing: 'Preparing your summary…',
-  closingTitle: 'Thank you',
-  closingBody: 'That’s everything — you can close this tab now.',
+closingTitle: 'Thank you',
+  closingBody: 'That\'s everything — you can close this tab now.',
 
-  chromeLogoAlt: 'Logo of the Government of the Netherlands',
-  chromePublisherName: 'PBL Netherlands Environmental Assessment Agency',
-  chromeFooterAttribution: '© PBL Netherlands Environmental Assessment Agency',
+  appTitle: 'Text Cluster Validation',
 
   debriefExplainWord: (correct, intruderWord) =>
     correct
@@ -259,9 +251,7 @@ const nl: Messages = {
   closingTitle: 'Bedankt',
   closingBody: 'Dat was alles — je kunt dit tabblad nu sluiten.',
 
-  chromeLogoAlt: 'Logo van de Rijksoverheid van Nederland',
-  chromePublisherName: 'Planbureau voor de Leefomgeving',
-  chromeFooterAttribution: '© PBL Planbureau voor de Leefomgeving',
+  appTitle: 'Tekstcluster Validatie',
 
   debriefExplainWord: (correct, intruderWord) =>
     correct

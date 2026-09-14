@@ -1,14 +1,12 @@
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@databricks/appkit-ui/react';
+} from '@/components/ui/card';
 import { TriangleAlert } from 'lucide-react';
 import type { TaskType } from '../../../shared/types';
 import { useTranslate } from '@/lib/i18n-context';

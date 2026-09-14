@@ -26,11 +26,7 @@ export default defineConfig(({ mode }) => {
         semicolons: true,
         routeTreeFileHeader: ['/* eslint-disable */', '// noinspection JSUnusedGlobalSymbols'],
       }),
-      react({
-        babel: {
-          plugins: ['babel-plugin-react-compiler'],
-        },
-      }),
+      react(),
       tailwindcss(),
     ],
     server: {

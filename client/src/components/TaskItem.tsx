@@ -1,20 +1,10 @@
 import type { ReactNode } from 'react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Empty,
-  EmptyDescription,
-  EmptyTitle,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  Spinner,
-} from '@databricks/appkit-ui/react';
-import { CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Spinner } from '@/components/ui/spinner';
+import { CheckCircle2, CircleOff } from 'lucide-react';
 import { InlineErrorAlert } from '@/components/InlineErrorAlert';
 import { LoadingMessage } from '@/components/LoadingMessage';
 import { SafeHtml } from '@/components/SafeHtml';
@@ -90,11 +80,10 @@ export function TaskItem({
   if (candidates.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12">
-          <Empty>
-            <EmptyTitle>{t('taskNothingToShowTitle')}</EmptyTitle>
-            <EmptyDescription>{t('taskNothingToShowDescription')}</EmptyDescription>
-          </Empty>
+        <CardContent className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+          <CircleOff className="h-8 w-8 text-muted-foreground" />
+          <h3 className="text-lg font-semibold">{t('taskNothingToShowTitle')}</h3>
+          <p className="text-sm text-muted-foreground">{t('taskNothingToShowDescription')}</p>
         </CardContent>
       </Card>
     );

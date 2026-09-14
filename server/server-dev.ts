@@ -1,4 +1,12 @@
+/**
+ * Development entry point — wraps the Express server.ts with Vite dev middleware
+ * for single-process HMR development serving.
+ *
+ * Usage: `NODE_ENV=development tsx ./server/server-dev.ts`
+ */
+
 import express from 'express';
+import { createServer as createViteServer } from 'vite';
 import { createScalewayStorage } from './src/lib/scalewayStorage';
 import { validateConfig } from './src/lib/config';
 import { createStudyProvider } from './src/services/studyProvider';
@@ -66,16 +74,18 @@ try {
 </body>
 </html>`);
     });
-  } else if (process.env.NODE_ENV === 'production') {
-    app.use(express.static('client/dist'));
-    app.get('*', (_req, res) => {
-      res.sendFile('index.html', { root: 'client/dist' });
+  } else {
+    const vite = await createViteServer({
+      configFile: 'client/vite.config.ts',
+      server: { middlewareMode: true },
     });
+    app.use(vite.middlewares);
   }
 
   app.listen(config.port, () => {
     console.log(`[server] Running at http://localhost:${config.port}`);
     console.log(`[server] Study: ${config.studyId} | Language: ${config.language}`);
+    console.log(`[server] Vite dev server active — HMR enabled`);
   });
 } catch (err) {
   console.error('[server] Fatal startup error:', err instanceof Error ? err.message : err);

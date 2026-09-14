@@ -1,46 +1,43 @@
 /**
- * In-memory {@link VolumeStorage} for unit tests (R13). Models the subset of the AppKit Files API
- * the services use: whole-file read/upload (with `overwrite:false` semantics), immediate-child
- * directory listing, and existence checks. A missing directory lists as empty.
+ * In-memory {@link S3Storage} for unit tests. Models the subset of the S3 API
+ * the services use: whole-file read/upload (with `overwrite:false` semantics),
+ * key listing by prefix, and existence checks.
  */
 
-import type { StorageEntry, VolumeStorage } from '../../../server/src/lib/storage';
+import type { S3Storage } from '../../../server/src/lib/storage';
 
-export class FakeStorage implements VolumeStorage {
+export class FakeStorage implements S3Storage {
   readonly files = new Map<string, string>();
 
-  async read(filePath: string): Promise<string> {
-    const contents = this.files.get(filePath);
-    if (contents === undefined) throw new Error(`not found: ${filePath}`);
+  async read(key: string, _options?: { maxSize?: number }): Promise<string> {
+    const contents = this.files.get(key);
+    if (contents === undefined) throw new Error(`not found: ${key}`);
     return contents;
   }
 
-  async list(directoryPath: string): Promise<StorageEntry[]> {
-    const prefix = directoryPath.endsWith('/') ? directoryPath : `${directoryPath}/`;
-    const children = new Map<string, boolean>(); // name -> is_directory
+  async list(prefix: string): Promise<string[]> {
+    const keys: string[] = [];
     for (const key of this.files.keys()) {
-      if (!key.startsWith(prefix)) continue;
-      const rest = key.slice(prefix.length);
-      const slash = rest.indexOf('/');
-      if (slash === -1) children.set(rest, false);
-      else children.set(rest.slice(0, slash), true);
+      if (key.startsWith(prefix) && !key.endsWith('/')) {
+        keys.push(key);
+      }
     }
-    return [...children].map(([name, is_directory]) => ({ name, path: `${prefix}${name}`, is_directory }));
+    return keys;
   }
 
-  async upload(filePath: string, contents: string, options?: { overwrite?: boolean }): Promise<void> {
-    if (options?.overwrite === false && this.files.has(filePath)) {
-      throw new Error(`already exists: ${filePath}`);
+  async upload(key: string, body: string, options?: { overwrite?: boolean }): Promise<void> {
+    if (options?.overwrite === false && this.files.has(key)) {
+      throw new Error(`already exists: ${key}`);
     }
-    this.files.set(filePath, contents);
+    this.files.set(key, body);
   }
 
-  async exists(filePath: string): Promise<boolean> {
-    return this.files.has(filePath);
+  async exists(key: string): Promise<boolean> {
+    return this.files.has(key);
   }
 
-  /** Seed a file directly (test convenience). */
-  seed(filePath: string, contents: string): void {
-    this.files.set(filePath, contents);
+  /** Seed a key directly (test convenience). */
+  seed(key: string, contents: string): void {
+    this.files.set(key, contents);
   }
 }

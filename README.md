@@ -1,225 +1,161 @@
-# clustering-app
+# Text Cluster Validation Survey
 
-A Databricks App powered by [AppKit](https://databricks.github.io/appkit/), featuring React, TypeScript, and Tailwind CSS.
-
-**Enabled plugins:**
-
-- **Files** -- File operations against Databricks Volumes and Unity Catalog
-- **Server** -- Express HTTP server with static file serving and Vite dev mode
+A standalone local survey application for text cluster intrusion validation.
+Runs entirely on your machine with no cloud infrastructure required.
 
 ## Prerequisites
 
-- Node.js v22+ and pnpm
-- Databricks CLI (for deployment)
-- Access to a Databricks workspace
+- **Node.js 22+** installed
+- A **Scaleway account** with an Object Storage bucket created
+- The bucket must be set to **public visibility** (both reads and writes, no authentication)
 
-## Databricks Authentication
+## Setup
 
-### Local Development
+### 1. Clone and install
 
-For local development, configure your environment variables by creating a `.env` file:
+```bash
+git clone <repo-url>
+cd text-cluster-validation-app
+npm install
+```
+
+### 2. Configure environment
+
+Copy the example environment file and fill in your Scaleway bucket details:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set the environment variables you need:
-
-```env
-DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
-DATABRICKS_APP_PORT=8000
-STUDY_ID=study-001          # one deployment = one Study; must match study.json's studyId
-SURVEY_LANGUAGE=en          # built-in UI language: `nl` or `en` (default `en`)
-# ... other environment variables, depending on the plugins you use
-```
-
-`SURVEY_LANGUAGE` selects the app-wide language of built-in UI strings only (buttons, prompts,
-system messages, and the default welcome copy). It is not per-study or participant-selectable, and
-it never translates researcher-authored content or task items. Unset or invalid values fall back to
-`en`. The client reads it from `SURVEY_LANGUAGE` at client build time, so changing the value requires
-rebuilding the client bundle.
-
-### CLI Authentication
-
-The Databricks CLI requires authentication to deploy and manage apps. Configure authentication using one of these methods:
-
-#### OAuth U2M
-
-Interactive browser-based authentication with short-lived tokens:
+Edit `.env`:
 
 ```bash
-databricks auth login --host https://your-workspace.cloud.databricks.com
+# Required: Your Scaleway Object Storage bucket name
+SCALEWAY_BUCKET=my-text-cluster-demo
+
+# Optional: Scaleway endpoint and region (defaults shown)
+SCALEWAY_ENDPOINT=https://s3.fr-par.scw.cloud
+SCALEWAY_REGION=fr-par
+
+# Required: Study identifier
+STUDY_ID=example-study
+
+# Optional: Survey language (en or nl, default: en)
+SURVEY_LANGUAGE=en
+
+# Optional: Server port (default: 3001)
+PORT=3001
 ```
 
-This will open your browser to complete authentication. The CLI saves credentials to `~/.databrickscfg`.
+### 3. Upload your study file
 
-#### Configuration Profiles
+Place your `study.json` in the Scaleway bucket at:
 
-Use multiple profiles for different workspaces:
-
-```ini
-[DEFAULT]
-host = https://dev-workspace.cloud.databricks.com
-
-[production]
-host = https://prod-workspace.cloud.databricks.com
-client_id = prod-client-id
-client_secret = prod-client-secret
+```
+text_cluster_validation/{STUDY_ID}/study/study.json
 ```
 
-Deploy using a specific profile:
+For example, if `STUDY_ID=example-study`:
+
+```
+text_cluster_validation/example-study/study/study.json
+```
+
+You can upload this via the Scaleway console, the AWS CLI (configured for Scaleway), or any S3-compatible tool.
+
+## Usage
+
+### Start the application
 
 ```bash
-databricks bundle deploy --profile production
+npm run dev
 ```
 
-**Note:** Personal Access Tokens (PATs) are legacy authentication. OAuth is strongly recommended for better security.
+Open `http://localhost:3001` in your browser.
 
-## Getting Started
-
-### Install Dependencies
+### Production build
 
 ```bash
-pnpm install
+npm run build
+npm start
 ```
 
-### Development
+## How It Works
 
-Run the app in development mode with hot reload:
+1. **Participant visits** the app → gets anonymous UUID (stored in browser localStorage)
+2. **Server assigns** them to the least-utilized pre-defined item session
+3. **Survey flow**: Welcome → Word Instructions → Word Practice → Word Items → Cluster Instructions → Cluster Practice → Cluster Items → Debrief → Complete
+4. **All responses** are written as JSON files to the Scaleway bucket at `text_cluster_validation/{studyId}/responses/{participantId}/{itemId}.json`
+5. **Ground truth** (correct answers) is never sent to the browser until the participant completes all items
+6. **Progress persists** via browser localStorage — closing and reopening the browser on the same device resumes where they left off
 
-```bash
-pnpm run dev
-```
+### What Happens at Startup
 
-The app will be available at the URL shown in the console output.
+1. The server validates all required environment variables
+2. It connects to the Scaleway bucket and verifies the study file exists
+3. The study JSON is loaded, validated, and cached in memory
+4. The client bundle is served (via Vite dev server in development)
+5. The server begins listening on the configured port
 
-### Build
-
-Build both client and server for production:
-
-```bash
-pnpm run build
-```
-
-This creates:
-
-- `dist/server.js` - Compiled server bundle
-- `client/dist/` - Bundled client assets
-
-### Production
-
-Run the production build:
-
-```bash
-pnpm start
-```
+If anything fails (missing config, unreachable bucket, invalid study), a clear error is shown in both the terminal and the browser.
 
 ## Authoring a study
 
-Each deployment serves one Study, authored in `study.json` inside the UC Volume (see
-`STUDY_ID` above). Feature 002 adds two authoring capabilities; the
-[feature-002 quickstart](specs/002-home-welcome-document-formatting/quickstart.md) has full
-examples.
+Each deployment serves one Study, authored in `study.json` in the Scaleway bucket (see `STUDY_ID` above). Feature 002 adds two authoring capabilities; the [feature-002 quickstart](specs/002-home-welcome-document-formatting/quickstart.md) has full examples.
 
 ### Welcome copy (optional)
 
-Add a top-level `welcome` object with one Markdown-formatted `content` field to control the home
-page. When omitted, a localized default (in `SURVEY_LANGUAGE`) is shown instead. Welcome copy is
-researcher-authored content and is never routed through the UI translation catalog.
+Add a top-level `welcome` object with one Markdown-formatted `content` field to control the home page. When omitted, a localized default (in `SURVEY_LANGUAGE`) is shown instead. Welcome copy is researcher-authored content and is never routed through the UI translation catalog.
 
 ### HTML target documents (cluster items)
 
-A cluster item's `targetText` may contain presentational HTML; plain text continues to work
-unchanged. The server sanitizes it in memory before it ever reaches the browser, so authored markup
-is safe by construction:
+A cluster item's `targetText` may contain presentational HTML; plain text continues to work unchanged. The server sanitizes it in memory before it ever reaches the browser, so authored markup is safe by construction:
 
 - **Kept:** `p, br, span, strong, em, b, i, u, s, h1–h4, ul, ol, li, blockquote, code, pre, hr`.
-- **Stripped:** scripts, styles, links, images, event handlers, all attributes, and any remote or
-  protocol-relative references. Malformed markup degrades to readable text.
+- **Stripped:** scripts, styles, links, images, event handlers, all attributes, and any remote or protocol-relative references. Malformed markup degrades to readable text.
 
 The browser only ever receives the inert, sanitized subset — never the raw authored HTML.
-
-## Code Quality
-
-There are a few commands to help you with code quality:
-
-```bash
-# Type checking
-pnpm run typecheck
-
-# Linting
-pnpm run lint
-pnpm run lint:fix
-
-# Formatting
-pnpm run format
-pnpm run format:fix
-```
-
-## Deployment with Databricks Asset Bundles
-
-### 1. Configure Bundle
-
-Update `databricks.yml` with your workspace settings:
-
-```yaml
-targets:
-  default:
-    workspace:
-      host: https://your-workspace.cloud.databricks.com
-```
-
-Make sure to replace all placeholder values in `databricks.yml` with your actual resource IDs.
-
-### 2. Validate Bundle
-
-```bash
-databricks bundle validate
-```
-
-### 3. Deploy
-
-Deploy to the default target:
-
-```bash
-databricks bundle deploy
-```
-
-### 4. Run
-
-Start the deployed app:
-
-```bash
-databricks bundle run <APP_NAME> -t dev
-```
-
-### Deploy to Production
-
-1. Configure the production target in `databricks.yml`
-2. Deploy to production:
-
-```bash
-databricks bundle deploy -t prod
-```
 
 ## Project Structure
 
 ```
-* client/          # React frontend
-  * src/           # Source code
-  * public/        # Static assets
-* server/          # Express backend
-  * server.ts      # Server entry point
-  * routes/        # Routes
-* shared/          # Shared types
-* databricks.yml   # Bundle configuration
-* app.yaml         # App configuration
-* .env.example     # Environment variables example
+server/           # Express API server
+client/           # React SPA (shadcn/ui + TanStack Router)
+shared/           # Shared types, schemas, i18n
+tests/            # Unit and e2e tests
+specs/            # Feature specifications and plans
 ```
 
 ## Tech Stack
 
-- **Backend**: Node.js, Express
-- **Frontend**: React.js, TypeScript, Vite, Tailwind CSS, React Router
-- **UI Components**: Radix UI, shadcn/ui
-- **Databricks**: AppKit SDK
+- **Backend**: Node.js, Express, `@aws-sdk/client-s3`
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, TanStack Router
+- **UI Components**: shadcn/ui (Radix UI primitives)
+- **Storage**: Scaleway Object Storage (S3-compatible public bucket)
+
+## Code Quality
+
+```bash
+# Type checking
+npm run typecheck
+
+# Linting
+npm run lint
+npm run lint:fix
+
+# Unit tests
+npm run test
+
+# E2E/smoke tests
+npm run test:e2e
+```
+
+## Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| "Missing required configuration" at startup | `.env` file not set up or missing vars | Copy `.env.example` to `.env` and fill in all required values |
+| "Study file not found" at startup | study.json missing from bucket | Upload study.json to `text_cluster_validation/{STUDY_ID}/study/study.json` in your bucket |
+| "Bucket unreachable" at startup | Wrong endpoint/region, or bucket not public | Verify Scaleway bucket exists and visibility is set to public |
+| White screen in browser | Vite dev server not started | Check console for errors; ensure `npm run dev` started successfully |
+| Responses not saving | Bucket not writable (not public) | Set bucket visibility to public in Scaleway console |
