@@ -33,7 +33,7 @@ export function registerResponseRoutes(app: Express, deps: RouteDeps): void {
       const assignmentPromise = ensureAssignment(ctx, participantId);
       const result = await recordResponse(ctx, { participantId, body: parsed.data });
       const assignment = await assignmentPromise;
-      const next = await getSessionState(ctx, { participantId, acknowledgedInstructions }, { assignment });
+      const next = await getSessionState(ctx, { participantId, acknowledgedInstructions }, { assignment, practiceAnswered: result.practiceAnswered });
 
       const body: SubmitResult = { recorded: result.recorded, next };
       res.json(body);

@@ -161,6 +161,28 @@ describe('sessionService', () => {
     expect(afterWords.phase).toBe('cluster-instructions');
   });
 
+  it('uses pre-computed practiceAnswered counts when provided, avoiding S3 listing race (009 nav fix)', async () => {
+    const storage = new FakeStorage();
+    const ctx = makeCtx(storage);
+    seedAssignment(storage, 'p-fast', 's-A');
+
+    const withCount = await getSessionState(
+      ctx,
+      { participantId: 'p-fast', acknowledgedInstructions: ackWord },
+      { practiceAnswered: { word: 1, cluster: 0 } }
+    );
+    expect(withCount.phase).toBe('word-practice');
+    expect(withCount.current).toMatchObject({ index: 2, of: 2 });
+
+    const withTwoCount = await getSessionState(
+      ctx,
+      { participantId: 'p-fast', acknowledgedInstructions: ackWord },
+      { practiceAnswered: { word: 2, cluster: 0 } }
+    );
+    expect(withTwoCount.phase).toBe('word-items');
+    expect(withTwoCount.current).toMatchObject({ phase: 'word-items', item: { itemId: 'w1' } });
+  });
+
   it('counts only real items in progress, never practice (FR-007/FR-011)', async () => {
     const storage = new FakeStorage();
     const ctx = makeCtx(storage);

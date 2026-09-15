@@ -17,7 +17,13 @@
 import type { Selection, StoredSelection, SubmitRequest } from '../../../shared/types';
 import { practiceResponsePath, responsePath } from '../lib/paths';
 import { writeOnce } from '../lib/storage';
-import { ensureAssignment, listAnsweredItemIds, type ServiceContext } from './sessionService';
+import {
+  countPracticeAnswered,
+  ensureAssignment,
+  listAnsweredItemIds,
+  listPracticeResponseIds,
+  type ServiceContext,
+} from './sessionService';
 
 /** A persisted real Response (data-model.md "Response"). */
 export interface Response {
@@ -65,6 +71,7 @@ export class ResponseError extends Error {
 
 export interface RecordResult {
   recorded: boolean;
+  practiceAnswered?: { word: number; cluster: number };
 }
 
 /**
@@ -125,7 +132,8 @@ export async function recordResponse(
       practiceResponsePath(studyId, participantId, wordPractice.practiceId),
       JSON.stringify(practiceResponse)
     );
-    return { recorded: true };
+    const practicePresent = await listPracticeResponseIds(ctx, participantId);
+    return { recorded: true, practiceAnswered: countPracticeAnswered(study, practicePresent) };
   }
 
   // 3. Real cluster item — recordable only once every assigned word item is answered (FR-022).
@@ -182,7 +190,8 @@ export async function recordResponse(
       practiceResponsePath(studyId, participantId, clusterPractice.practiceId),
       JSON.stringify(practiceResponse)
     );
-    return { recorded: true };
+    const practicePresent = await listPracticeResponseIds(ctx, participantId);
+    return { recorded: true, practiceAnswered: countPracticeAnswered(study, practicePresent) };
   }
 
   // 5. Unknown item id.

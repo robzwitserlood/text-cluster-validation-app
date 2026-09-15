@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
@@ -9,8 +10,10 @@ export interface LoadingMessageProps {
 
 export function LoadingMessage({ children, className }: LoadingMessageProps) {
   return (
-    <div className={cn('flex items-center justify-center gap-3 text-muted-foreground', className)}>
-      <Spinner /> {children}
-    </div>
+    <Card>
+      <CardContent className={cn('flex items-center justify-center gap-3 text-muted-foreground', className)}>
+        <Spinner /> {children}
+      </CardContent>
+    </Card>
   );
 }

@@ -95,6 +95,8 @@ function Walkthrough({ examples, index, onNext }: { examples: DebriefExample[]; 
   const example = examples[index];
   if (!example) return null;
 
+  const isLast = index + 1 >= examples.length;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -103,11 +105,7 @@ function Walkthrough({ examples, index, onNext }: { examples: DebriefExample[]; 
         </CardHeader>
       </Card>
 
-      <Debrief key={example.itemId} example={example} />
-
-      <div className="flex justify-end">
-        <Button onClick={onNext}>{t('debriefNext')}</Button>
-      </div>
+      <Debrief key={example.itemId} example={example} onNext={onNext} isLast={isLast} />
     </div>
   );
 }

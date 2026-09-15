@@ -26,7 +26,7 @@ export function Welcome({ welcome, onBegin }: WelcomeProps) {
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
-        <div className="welcome-prose prose max-w-none">
+        <div className="survey-prose prose max-w-none">
           <Markdown>{welcome.content}</Markdown>
         </div>
 

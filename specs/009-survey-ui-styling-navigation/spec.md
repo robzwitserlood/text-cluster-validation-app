@@ -50,13 +50,17 @@ Every screen in the survey (welcome, instructions, practice, task items, debrief
 
 - **FR-001**: The Tailwind CSS utility framework MUST be properly loaded and applied so all Tailwind utility classes in components produce their intended visual effects.
 - **FR-002**: All shadcn/ui components (Card, Button, RadioGroup, Alert, Badge, Progress, Label) MUST render with their intended visual styling from the project's CSS variable theme.
+- **FR-002a**: Markdown content (welcome page, instructions) MUST be styled using the `@tailwindcss/typography` plugin's `prose` class for automatic typographic styling of rendered HTML elements.
 - **FR-003**: The practice submit flow MUST correctly advance the participant from the first practice item to the second practice item when "Continue" is clicked.
 - **FR-004**: The participant MUST be able to navigate through the entire survey flow from welcome through to the closing screen without encountering a dead end or unresponsive UI.
 - **FR-005**: Every interactive control (buttons, radio options) MUST be reachable and operable by both mouse and keyboard.
 - **FR-006**: The UI MUST present a neutral color palette (grayscale tones) without brand-specific colors, consistent with the already-configured shadcn/ui neutral theme.
-- **FR-007**: All pages MUST render with appropriate layout constraints (max-width container, horizontal padding, vertical spacing between sections).
+- **FR-007**: All pages MUST render with a centered container, max-width of approximately 1024px, with consistent horizontal padding on both sides (at least 1rem/16px). Vertical spacing between sections MUST be consistent (at least 1.5rem/24px).
 - **FR-008**: Error states (network failures, submission errors) MUST display user-visible feedback (inline error alerts) so the participant knows something went wrong.
 - **FR-009**: The "Continue" button on practice items MUST only be clickable when the next session state is available and navigation is ready.
+- **FR-010**: The progress indicator MUST display both the overall phase progress (e.g., "Phase 3 of 10") and the per-task item counter (e.g., "Question 5 of 12"), updating after each successful transition.
+- **FR-011**: Phase transitions (e.g., after clicking Continue/Submit) MUST be instant — the next screen content replaces the current one directly with no intermediate loading spinner, skeleton, or overlay.
+- **FR-012**: Navigation MUST be forward-only — no back button, browser back navigation, or undo functionality is provided at any point in the survey flow.
 
 ### Key Entities
 
@@ -74,6 +78,16 @@ Every screen in the survey (welcome, instructions, practice, task items, debrief
 - **SC-004**: All interactive elements (buttons, radio options) respond visually on hover and focus within 100ms.
 - **SC-005**: Navigation from one survey phase to the next completes within 500ms under normal network conditions.
 - **SC-006**: 100% of error states (network failure, server error) display a visible error message to the user.
+
+## Clarifications
+
+### Session 2026-09-15
+
+- Q: What should the progress bar show? → A: Both overall phase progress and per-task item counter (e.g., "Phase 3 of 10 — Question 5 of 12")
+- Q: How should Markdown/prose content be styled? → A: Use `@tailwindcss/typography` plugin with `prose` class for automatic Markdown styling
+- Q: What should the container layout be? → A: Centered container, max-width ~1024px, padded sides
+- Q: What should appear during loading/transition states between phases? → A: Nothing — the content simply replaces on next render (instant transition)
+- Q: Should participants be able to go back to previous questions? → A: Forward-only — no back button anywhere in the survey
 
 ## Assumptions
 

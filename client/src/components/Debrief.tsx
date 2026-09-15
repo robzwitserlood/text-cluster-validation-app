@@ -1,29 +1,27 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckCircle2, GraduationCap, XCircle } from 'lucide-react';
 import type { DebriefExample } from '../../../shared/types';
 import { useTranslate } from '@/lib/i18n-context';
+import { cn } from '@/lib/utils';
 import { ClusterTermList } from './ClusterTermList';
-import { TaskItem, type TaskCandidate } from './TaskItem';
-
-/**
- * Post-completion debrief item (T040, US4 — FR-019/FR-020).
- *
- * Re-renders ONE answered item read-only in the session layout: the same {@link TaskItem} the
- * participant used, with the choice controls locked (`hideSubmit`), the participant's own selection
- * marked, and a correct/incorrect indicator plus the system-generated, cluster-framed explanation
- * below. The stepper in `complete.tsx` (T041) drives which example is shown and the Next control.
- *
- * The framing is deliberately about the **clusters**, not the participant: there is no score,
- * pass/fail, or aggregate statistic (Edge Cases), and the copy never grades the person (FR-020). The
- * values here are the only place the correct intruder is revealed (R5) — this renders only after the
- * server reports completion and `GET /api/debrief` succeeds.
- */
+import { SafeHtml } from './SafeHtml';
 
 export interface DebriefProps {
   example: DebriefExample;
+  onNext: () => void;
+  isLast: boolean;
 }
 
-function toCandidates(example: DebriefExample): { candidates: TaskCandidate[]; targetHtml?: string } {
+interface Candidate {
+  value: string;
+  label: React.ReactNode;
+}
+
+function toCandidates(example: DebriefExample): { candidates: Candidate[]; targetHtml?: string } {
   if (example.taskType === 'word') {
     return { candidates: example.candidateWords.map((word) => ({ value: word, label: word })) };
   }
@@ -36,22 +34,47 @@ function toCandidates(example: DebriefExample): { candidates: TaskCandidate[]; t
   };
 }
 
-export function Debrief({ example }: DebriefProps) {
+export function Debrief({ example, onNext, isLast }: DebriefProps) {
   const t = useTranslate();
   const { candidates, targetHtml } = toCandidates(example);
   const title = example.taskType === 'word' ? t('wordTaskPrompt') : t('clusterTaskPrompt');
 
   return (
-    <TaskItem
-      title={title}
-      targetHtml={targetHtml}
-      candidates={candidates}
-      // The participant's own selection is marked; the controls are locked (read-only recap).
-      value={example.yourSelection.value}
-      onChange={() => {}}
-      onSubmit={() => {}}
-      hideSubmit
-      footer={
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {targetHtml ? <SafeHtml html={targetHtml} /> : null}
+
+        <RadioGroup
+          value={example.yourSelection.value}
+          disabled
+          className="grid gap-3 sm:grid-cols-2"
+          aria-label={title}
+        >
+          {candidates.map((candidate) => {
+            const id = `debrief-${candidate.value}`;
+            const isSelected = example.yourSelection.value === candidate.value;
+            return (
+              <Label
+                key={candidate.value}
+                htmlFor={id}
+                className={cn(
+                  'relative flex cursor-default items-center gap-3 rounded-lg border-2 px-4 py-4 text-left font-medium',
+                  isSelected
+                    ? 'border-primary bg-accent shadow-sm'
+                    : 'border-border bg-card text-muted-foreground'
+                )}
+              >
+                <RadioGroupItem id={id} value={candidate.value} />
+                <span className="flex-1">{candidate.label}</span>
+                {isSelected ? <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" /> : null}
+              </Label>
+            );
+          })}
+        </RadioGroup>
+
         <div className="space-y-2">
           <Badge variant="outline" className="gap-1.5">
             {example.correct ? (
@@ -70,7 +93,10 @@ export function Debrief({ example }: DebriefProps) {
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">{example.clusterValidityExplanation}</p>
         </div>
-      }
-    />
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button onClick={onNext}>{isLast ? t('debriefFinish') : t('debriefNext')}</Button>
+      </CardFooter>
+    </Card>
   );
 }

@@ -28,11 +28,15 @@ export function createScalewayStorage(config: {
     credentials: { accessKeyId: '', secretAccessKey: '' },
   });
 
+  // Strip the signature headers: the bucket is public and Scaleway rejects a signature computed
+  // from the empty credentials the SDK requires us to supply. `args.request` is untyped at this
+  // step of the middleware stack, so the header bag is narrowed locally.
   client.middlewareStack.add(
     (next) => (args) => {
-      if (args.request?.headers) {
-        delete args.request.headers['authorization'];
-        delete args.request.headers['x-amz-content-sha256'];
+      const request = args.request as { headers?: Record<string, string> } | undefined;
+      if (request?.headers) {
+        delete request.headers['authorization'];
+        delete request.headers['x-amz-content-sha256'];
       }
       return next(args);
     },
@@ -56,18 +60,30 @@ export function createScalewayStorage(config: {
     },
 
     async list(prefix) {
-      const cmd = new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: prefix,
-        Delimiter: '/',
-      });
-      const response = await client.send(cmd);
+      // The prefix is a *directory*, so it must end in `/`: `paths.ts` builds directory paths
+      // without a trailing slash, and a bare prefix would also match sibling directories that
+      // merely start with the same string (e.g. `session-assignments-archive/`).
+      const normalized = prefix.endsWith('/') ? prefix : `${prefix}/`;
+
+      // No `Delimiter` — callers want the object keys under the prefix, not the folder rollup.
+      // With `Delimiter: '/'` S3 returns every nested key in `CommonPrefixes` and leaves
+      // `Contents` empty, which silently reads back as "nothing recorded".
       const keys: string[] = [];
-      if (response.Contents) {
-        for (const obj of response.Contents) {
+      let continuationToken: string | undefined;
+      do {
+        const response = await client.send(
+          new ListObjectsV2Command({
+            Bucket: bucket,
+            Prefix: normalized,
+            ...(continuationToken ? { ContinuationToken: continuationToken } : {}),
+          })
+        );
+        for (const obj of response.Contents ?? []) {
           if (obj.Key) keys.push(obj.Key);
         }
-      }
+        // Follow pagination; a single page caps at 1000 keys and would otherwise truncate.
+        continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+      } while (continuationToken);
       return keys;
     },
 

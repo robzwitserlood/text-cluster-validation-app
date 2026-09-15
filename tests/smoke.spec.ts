@@ -67,18 +67,6 @@ async function completePractice(page: Page, badge: string): Promise<void> {
   await pressButton(page, 'Continue');
 }
 
-/**
- * Assert the persistent PBL branded page chrome wraps the current screen (US4, FR-010/FR-010a):
- * a masthead carrying the BUNDLED (not hotlinked) PBL logo and a branding-only footer band with
- * NO clickable outbound links. Presentation only — it adds no task navigation.
- */
-async function expectPblChrome(page: Page): Promise<void> {
-  await expect(page.locator('header img[src="/pbl-logo.svg"]')).toBeVisible();
-  const footer = page.locator('footer');
-  await expect(footer).toBeVisible();
-  await expect(footer.locator('a')).toHaveCount(0);
-}
-
 const INTRUDER_OR_CORRECTNESS = new Set([
   'intruderWord',
   'intruderClusterId',
@@ -157,8 +145,8 @@ test('completes word→cluster→debrief by keyboard and never leaks the intrude
 
   // Count GET /api/session requests (US3, FR-007/SC-003/SC-006, research.md R6): advanceToSession
   // writes the server-resolved next SessionState straight into the query cache
-  // (client/src/lib/flow-route-state.ts:18-24), so no item/completion transition below should ever
-  // trigger a second session fetch — only the very first navigation to '/' should.
+  // (client/src/lib/flow-route-state.ts), so no item/completion transition below should ever
+  // trigger a session fetch — only the very first navigation to '/' and Begin clicks should.
   let sessionRequestCount = 0;
   page.on('request', (req) => {
     if (req.method() === 'GET' && req.url().includes('/api/session')) sessionRequestCount++;
@@ -168,13 +156,10 @@ test('completes word→cluster→debrief by keyboard and never leaks the intrude
 
   // --- Welcome home page (US1) ------------------------------------------------------------------
   await expect(page.getByText('Welcome', { exact: true })).toBeVisible();
-  // The PBL branded chrome (masthead + footer) wraps the welcome screen (US4, FR-010/FR-010a).
-  await expectPblChrome(page);
   await pressButton(page, 'Begin');
 
   // --- Word segment -----------------------------------------------------------------------------
   await expect(page.getByText('Word intrusion')).toBeVisible();
-  await expectPblChrome(page); // …the instructions screen too
   // Instructions: exactly one reminders box (single alert), a practice-first reminder, no
   // stop-survey control, and no "saved to this browser/device" line (US1, SC-001/SC-002/SC-004).
   await expect(page.getByText('practice questions before the real ones')).toBeVisible();
@@ -189,15 +174,14 @@ test('completes word→cluster→debrief by keyboard and never leaks the intrude
   await expect(page.getByText('start on the next page')).toBeVisible(); // Practice 2 — present
   await completePractice(page, 'Practice 2 of 2');
 
-  await expect(page.getByText('0 of 3 answered').first()).toBeVisible();
-  await expectPblChrome(page); // …and the task screen
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
   // Every answer-option tile shows a visible resting-state border, not only on hover/selection (US2).
   await expectVisibleRestingBorder(page);
-  // A submit-driven transition (US3, FR-007/SC-003/SC-006, research.md R6) resolves from the cache
-  // advanceToSession wrote — never a second GET /api/session between the POST and the next screen.
+  // advanceToSession writes server-resolved state into the query cache without a server roundtrip,
+  // so no item/completion transition triggers a session fetch — only route-loading and Begin clicks do.
   let sessionRequestsBeforeSubmit = sessionRequestCount;
   await answerByKeyboard(page, 'Submit');
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
   expect(sessionRequestCount).toBe(sessionRequestsBeforeSubmit); // word item 1 → item 2
 
   sessionRequestsBeforeSubmit = sessionRequestCount;
@@ -214,7 +198,7 @@ test('completes word→cluster→debrief by keyboard and never leaks the intrude
   await completePractice(page, 'Practice 1 of 2');
   await completePractice(page, 'Practice 2 of 2');
 
-  await expect(page.getByText('2 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 3 of 3').first()).toBeVisible();
   // The live cluster item's candidate terms also render as separate list rows (US1).
   await expectClusterTermRows(page);
   // The cluster task's answer-option tiles also show a visible resting-state border (US2).
@@ -229,13 +213,11 @@ test('completes word→cluster→debrief by keyboard and never leaks the intrude
   // explanation as optional via a clearly-labelled control (US3, SC-006).
   await expect(page.getByText('the survey is complete')).toBeVisible();
   await expect(page.getByText('close this tab')).toBeVisible();
-  await expectPblChrome(page); // …and the completion screen
   await expect(page.getByText('What your answers tell us')).toHaveCount(0); // not shown yet — behind the control
   await pressButton(page, 'View the optional explanation');
 
   // Walkthrough: each answered item (w1, w2 word + ci1 cluster = 3) re-shown read-only, then Next.
   await expect(page.getByText('What your answers tell us')).toBeVisible();
-  await expectPblChrome(page); // …and the optional explanation walkthrough
   // A read-only recap marks the participant's selection and shows a correct/incorrect indicator.
   await expect(page.getByText(/Correct|Not the intruder/).first()).toBeVisible();
   // The per-item explanation matches the English catalog (US3, SC-005 — no regression for English).
@@ -248,7 +230,7 @@ test('completes word→cluster→debrief by keyboard and never leaks the intrude
   // The cluster recap's candidate terms render as separate list rows too (US1).
   await expectClusterTermRows(page);
   await expectDebriefClusterExplanation(page, 'en', CI1_INTRUDER_CLUSTER_TERMS);
-  await pressButton(page, 'Next'); // ci1 → closing
+  await pressButton(page, 'Finish'); // ci1 → closing
 
   // Closing thank-you: the window may be closed.
   await expect(page.getByText('Thank you', { exact: true })).toBeVisible();
@@ -312,14 +294,14 @@ test('resumes mid-session at the next unanswered item after a reload (FR-008)', 
   await completePractice(page, 'Practice 1 of 2');
   await completePractice(page, 'Practice 2 of 2');
 
-  await expect(page.getByText('0 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
   await answerByKeyboard(page, 'Submit');
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
 
   // Same browser/localStorage → resume at the next unanswered item, no instructions/practice replay.
   await page.reload();
 
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
   await expect(page.getByText('Welcome', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Word intrusion')).toHaveCount(0);
@@ -339,9 +321,9 @@ test('shows a loading indicator, never a blank frame, when a resumed session rel
   await completePractice(page, 'Practice 1 of 2');
   await completePractice(page, 'Practice 2 of 2');
 
-  await expect(page.getByText('0 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
   await answerByKeyboard(page, 'Submit');
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
 
   // Delay the reload's GET /api/session (the client's cache is gone after a real reload) so the
   // router-level pendingComponent is what's on screen first — never blank, never the welcome page.
@@ -352,7 +334,7 @@ test('shows a loading indicator, never a blank frame, when a resumed session rel
   await page.reload();
 
   await expect(page.getByText('Loading…', { exact: true })).toBeVisible();
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
   await expect(page.getByText('Welcome', { exact: true })).toHaveCount(0);
 });
 
@@ -375,7 +357,7 @@ test('renders a formatted cluster document safely — structure, no raw markup, 
   await completePractice(page, 'Practice 2 of 2');
 
   // The cluster item document renders with structure (heading + emphasis), not one plain block.
-  await expect(page.getByText('2 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 3 of 3').first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Healthy crops' })).toBeVisible();
   await expect(page.locator('strong', { hasText: 'nitrogen' })).toBeVisible();
 
@@ -398,7 +380,7 @@ test('acknowledges a submit near-instantly, while the save is still pending (US2
   await pressButton(page, 'Begin');
   await completePractice(page, 'Practice 1 of 2');
   await completePractice(page, 'Practice 2 of 2');
-  await expect(page.getByText('0 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
 
   // Hold POST /api/responses open until we've asserted the submitting state, so the acknowledgment
   // assertion below is guaranteed to run while the save is still in flight.
@@ -423,7 +405,7 @@ test('acknowledges a submit near-instantly, while the save is still pending (US2
   await expect(submitting).toBeDisabled();
 
   releaseResponse();
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
 });
 
 test('a rapid double-submit advances progress by exactly one item, with no error shown (US2, FR-004)', async ({
@@ -434,7 +416,7 @@ test('a rapid double-submit advances progress by exactly one item, with no error
   await pressButton(page, 'Begin');
   await completePractice(page, 'Practice 1 of 2');
   await completePractice(page, 'Practice 2 of 2');
-  await expect(page.getByText('0 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
 
   let releaseResponse: () => void = () => {};
   const responseDelay = new Promise<void>((resolve) => {
@@ -455,8 +437,8 @@ test('a rapid double-submit advances progress by exactly one item, with no error
   await Promise.all([page.keyboard.press('Enter'), page.keyboard.press('Enter')]);
 
   releaseResponse();
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
-  await expect(page.getByText('2 of 3 answered').first()).toHaveCount(0);
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
+  await expect(page.getByText('Question 3 of 3').first()).toHaveCount(0);
   await expect(page.getByText('Something went wrong. Please try again.')).toHaveCount(0);
 });
 
@@ -466,7 +448,7 @@ test('shows a retryable error on a failed submit, then succeeds on retry (US2, F
   await pressButton(page, 'Begin');
   await completePractice(page, 'Practice 1 of 2');
   await completePractice(page, 'Practice 2 of 2');
-  await expect(page.getByText('0 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
 
   // Fail exactly the first POST /api/responses call; let any subsequent one through unintercepted.
   let failedOnce = false;
@@ -496,7 +478,7 @@ test('shows a retryable error on a failed submit, then succeeds on retry (US2, F
   // retrying by keyboard, same as the original submit.
   await retrySubmit.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('1 of 3 answered').first()).toBeVisible();
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
 });
 
 test('@nl localizes app chrome to the deployment language while task items stay verbatim (US3, FR-014/FR-015)', async ({
@@ -530,14 +512,14 @@ test('@nl localizes app chrome to the deployment language while task items stay 
 
   // --- Real word item: prompt + progress are Dutch; the supplied words are verbatim -------------
   await expect(page.getByText('Welk woord is de indringer?')).toBeVisible();
-  await expect(page.getByText('0 van 3 beantwoord').first()).toBeVisible();
+  await expect(page.getByText('Vraag 1 van 3').first()).toBeVisible();
   // The researcher-authored candidate words are English and must render exactly as authored (FR-015).
   await expect(page.getByRole('radio', { name: 'keyboard' })).toBeVisible();
   // The stop-survey control is removed everywhere (FR-007) — not present in any locale.
   await expect(page.getByRole('button', { name: 'Enquête stoppen' })).toHaveCount(0);
 
   await answerByKeyboard(page, 'Versturen');
-  await expect(page.getByText('1 van 3 beantwoord').first()).toBeVisible();
+  await expect(page.getByText('Vraag 2 van 3').first()).toBeVisible();
 
   // --- Second real word item, then into the cluster segment (chrome stays Dutch) -----------------
   await answerByKeyboard(page, 'Versturen');
@@ -550,7 +532,7 @@ test('@nl localizes app chrome to the deployment language while task items stay 
   await answerByKeyboard(page, 'Controleer antwoord');
   await pressButton(page, 'Doorgaan');
 
-  await expect(page.getByText('2 van 3 beantwoord').first()).toBeVisible();
+  await expect(page.getByText('Vraag 3 van 3').first()).toBeVisible();
   await answerByKeyboard(page, 'Versturen');
 
   // --- Completion → debrief walkthrough: per-item explanations are Dutch (US3, FR-006/FR-007) ----
@@ -563,9 +545,47 @@ test('@nl localizes app chrome to the deployment language while task items stay 
   await expectDebriefWordExplanation(page, 'nl', 'spreadsheet');
   await pressButton(page, 'Volgende'); // w2 → ci1
   await expectDebriefClusterExplanation(page, 'nl', CI1_INTRUDER_CLUSTER_TERMS);
-  await pressButton(page, 'Volgende'); // ci1 → closing
+  await pressButton(page, 'Afronden'); // ci1 → closing
 
   await expect(page.getByText('Bedankt', { exact: true })).toBeVisible();
+});
+
+test('advances through both practice items without dead-ending (009 nav fix)', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.getByText('Welcome', { exact: true })).toBeVisible();
+  await pressButton(page, 'Begin');
+
+  await expect(page.getByText('Word intrusion')).toBeVisible();
+  await pressButton(page, 'Begin');
+
+  await completePractice(page, 'Practice 1 of 2');
+
+  await expect(page.getByText('Practice 2 of 2')).toBeVisible();
+  await expect(page.getByText('start on the next page')).toBeVisible();
+
+  await completePractice(page, 'Practice 2 of 2');
+
+  await expect(page.getByText('Question 1 of 3').first()).toBeVisible();
+
+  await answerByKeyboard(page, 'Submit');
+  await expect(page.getByText('Question 2 of 3').first()).toBeVisible();
+
+  await answerByKeyboard(page, 'Submit');
+  await expect(page.getByText('Cluster intrusion')).toBeVisible();
+
+  await pressButton(page, 'Begin');
+
+  await completePractice(page, 'Practice 1 of 2');
+
+  await expect(page.getByText('Practice 2 of 2')).toBeVisible();
+  await completePractice(page, 'Practice 2 of 2');
+
+  await expect(page.getByText('Question 3 of 3').first()).toBeVisible();
+
+  await answerByKeyboard(page, 'Submit');
+
+  await expect(page.getByText('All done')).toBeVisible();
 });
 
 test('blocks the debrief until completion with 409 not_complete (SC-008, FR-021)', async ({ request }) => {

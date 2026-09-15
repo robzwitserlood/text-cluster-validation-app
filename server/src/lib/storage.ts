@@ -21,11 +21,17 @@ export interface S3Storage {
  * `session-assignments/` prefixes may not have any objects yet; the S3 API returns an
  * empty result set for prefixes with no objects. Resume and assignment logic treat
  * "nothing found" as "nothing recorded".
+ *
+ * A *failed* listing is indistinguishable from an empty one to the caller, and reading it as
+ * "nothing recorded" silently dead-ends the participant's flow. The prefix is logged (it contains
+ * only the studyId and the opaque participant UUID — no PII, R10) so such a fault is visible in
+ * the server log instead of surfacing as a stuck survey.
  */
 export async function listSafe(storage: S3Storage, prefix: string): Promise<string[]> {
   try {
     return await storage.list(prefix);
-  } catch {
+  } catch (err) {
+    console.warn(`[storage] list failed for prefix "${prefix}", treating as empty:`, err);
     return [];
   }
 }

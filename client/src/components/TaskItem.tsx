@@ -115,11 +115,11 @@ export function TaskItem({
                 key={candidate.value}
                 htmlFor={id}
                 className={cn(
-                  'relative flex cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-4 text-left font-medium transition-all',
-                  'hover:border-primary/60 hover:bg-primary/5',
+                  'relative flex cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-4 text-left font-medium transition-colors duration-100',
+                  'hover:border-primary/50 hover:bg-accent/50',
                   'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
                   isSelected
-                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    ? 'border-primary bg-accent shadow-sm'
                     : 'border-border bg-card text-foreground'
                 )}
               >

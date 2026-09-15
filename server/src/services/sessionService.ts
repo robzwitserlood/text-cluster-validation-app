@@ -286,6 +286,24 @@ function countAnsweredPractice(practiceIds: string[], present: Set<string>): num
   return count;
 }
 
+/**
+ * Per-segment practice counts derived from the recorded practice ids. The single place this is
+ * computed, so `POST /api/responses` and `GET /api/session` can never disagree about how many
+ * practice slots are filled (both honour the `PRACTICE_PER_SEGMENT` cap).
+ */
+export function countPracticeAnswered(study: Study, present: Set<string>): { word: number; cluster: number } {
+  return {
+    word: countAnsweredPractice(
+      study.practice.word.map((p) => p.practiceId),
+      present
+    ),
+    cluster: countAnsweredPractice(
+      study.practice.cluster.map((p) => p.practiceId),
+      present
+    ),
+  };
+}
+
 /** Extract the file id (basename without `.json`) from a directory entry. */
 function keyFileId(key: string): string | null {
   const parts = key.split('/');
@@ -299,6 +317,8 @@ function keyFileId(key: string): string | null {
 export interface GetSessionOptions {
   /** When the caller already resolved the assignment, skip a redundant read. */
   assignment?: SessionAssignment;
+  /** Pre-computed practice counts from a just-recorded response (saves a redundant listing). */
+  practiceAnswered?: { word: number; cluster: number };
 }
 
 /** Resolve the full `SessionState` for a participant (first-visit assignment included). */
@@ -307,15 +327,16 @@ export async function getSessionState(
   params: GetSessionParams,
   options: GetSessionOptions = {}
 ): Promise<SessionState> {
-  const wordPracticeIds = ctx.study.practice.word.map((p) => p.practiceId);
-  const clusterPracticeIds = ctx.study.practice.cluster.map((p) => p.practiceId);
-
   const [assignment, answered, practicePresent] = await Promise.all([
     options.assignment ?? ensureAssignment(ctx, params.participantId),
     listAnsweredItemIds(ctx, params.participantId),
-    listPracticeResponseIds(ctx, params.participantId),
+    // Skipped when the caller (a just-recorded response) already counted the practice slots.
+    options.practiceAnswered ? null : listPracticeResponseIds(ctx, params.participantId),
   ]);
   const session = findSession(ctx.study, assignment.sessionId);
+
+  const practiceAnswered =
+    options.practiceAnswered ?? countPracticeAnswered(ctx.study, practicePresent ?? new Set<string>());
 
   return resolveSessionState({
     study: ctx.study,
@@ -323,8 +344,8 @@ export async function getSessionState(
     participantId: params.participantId,
     welcome: resolveWelcome(ctx.study, ctx.language ?? 'en'),
     answered,
-    wordPracticeAnswered: countAnsweredPractice(wordPracticeIds, practicePresent),
-    clusterPracticeAnswered: countAnsweredPractice(clusterPracticeIds, practicePresent),
+    wordPracticeAnswered: practiceAnswered.word,
+    clusterPracticeAnswered: practiceAnswered.cluster,
     acknowledgedInstructions: params.acknowledgedInstructions,
   });
 }

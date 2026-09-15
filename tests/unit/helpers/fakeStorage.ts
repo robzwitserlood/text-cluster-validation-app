@@ -15,10 +15,16 @@ export class FakeStorage implements S3Storage {
     return contents;
   }
 
+  /**
+   * List keys under a prefix, mirroring the real adapter's contract: a directory prefix is
+   * normalized to end with `/`, so a sibling directory that merely starts with the same string
+   * (e.g. `session-assignments-archive/`) is not matched.
+   */
   async list(prefix: string): Promise<string[]> {
+    const normalized = prefix.endsWith('/') ? prefix : `${prefix}/`;
     const keys: string[] = [];
     for (const key of this.files.keys()) {
-      if (key.startsWith(prefix) && !key.endsWith('/')) {
+      if (key.startsWith(normalized) && !key.endsWith('/')) {
         keys.push(key);
       }
     }

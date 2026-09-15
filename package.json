@@ -78,7 +78,7 @@
     "eslint-plugin-react-refresh": "0.4.24",
     "prettier": "3.6.2",
     "sharp": "0.34.5",
-    "tailwindcss": "4.0.14",
+    "tailwindcss": "4.1.17",
     "tsx": "4.20.6",
     "typescript": "5.9.3",
     "typescript-eslint": "8.48.0",

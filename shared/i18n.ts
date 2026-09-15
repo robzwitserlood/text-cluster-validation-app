@@ -14,7 +14,7 @@
  * interface forces both `nl` and `en` to supply it, so the two locales can never drift (R4).
  */
 
-import type { SurveySection } from './types';
+import type { Phase, SurveySection } from './types';
 
 /** The supported deployment languages. */
 export type Locale = 'nl' | 'en';
@@ -73,6 +73,11 @@ export interface Messages {
   // Progress.
   progressLabel: string;
   progressAnswered: (answered: number, total: number) => string;
+  progress: {
+    step: (current: number, total: number) => string;
+    question: (current: number, total: number) => string;
+    phase: Record<Phase, string>;
+  };
 
   // Loading / error / notice chrome.
   loading: string;
@@ -87,6 +92,7 @@ export interface Messages {
   completeContinue: string;
   debriefTitle: string;
   debriefNext: string;
+  debriefFinish: string;
   debriefYourAnswer: string;
   debriefCorrect: string;
   debriefIncorrect: string;
@@ -153,6 +159,21 @@ const en: Messages = {
 
   progressLabel: 'Progress',
   progressAnswered: (answered, total) => `${answered} of ${total} answered`,
+  progress: {
+    step: (current, total) => `Step ${current} of ${total}`,
+    question: (current, total) => `Question ${current} of ${total}`,
+    phase: {
+      welcome: 'Welcome',
+      'word-instructions': 'Word Instructions',
+      'word-practice': 'Word Practice',
+      'word-items': 'Word Questions',
+      'cluster-instructions': 'Cluster Instructions',
+      'cluster-practice': 'Cluster Practice',
+      'cluster-items': 'Cluster Questions',
+      debrief: 'Debrief',
+      complete: 'Complete',
+    },
+  },
 
   loading: 'Loading…',
   loadErrorTitle: 'Couldn’t load the form',
@@ -166,6 +187,7 @@ const en: Messages = {
   completeContinue: 'View the optional explanation',
   debriefTitle: 'What your answers tell us',
   debriefNext: 'Next',
+  debriefFinish: 'Finish',
   debriefYourAnswer: 'Your answer',
   debriefCorrect: 'Correct',
   debriefIncorrect: 'Not the intruder',
@@ -231,6 +253,21 @@ const nl: Messages = {
 
   progressLabel: 'Voortgang',
   progressAnswered: (answered, total) => `${answered} van ${total} beantwoord`,
+  progress: {
+    step: (current, total) => `Stap ${current} van ${total}`,
+    question: (current, total) => `Vraag ${current} van ${total}`,
+    phase: {
+      welcome: 'Welkom',
+      'word-instructions': 'Woord Instructies',
+      'word-practice': 'Woord Oefening',
+      'word-items': 'Woord Vragen',
+      'cluster-instructions': 'Groep Instructies',
+      'cluster-practice': 'Groep Oefening',
+      'cluster-items': 'Groep Vragen',
+      debrief: 'Nabespreking',
+      complete: 'Voltooid',
+    },
+  },
 
   loading: 'Laden…',
   loadErrorTitle: 'Kon het formulier niet laden',
@@ -244,6 +281,7 @@ const nl: Messages = {
   completeContinue: 'Bekijk de optionele uitleg',
   debriefTitle: 'Wat jouw antwoorden ons vertellen',
   debriefNext: 'Volgende',
+  debriefFinish: 'Afronden',
   debriefYourAnswer: 'Jouw antwoord',
   debriefCorrect: 'Correct',
   debriefIncorrect: 'Niet de indringer',

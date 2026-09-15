@@ -1,3 +1,5 @@
+@import 'tailwindcss';
+
 @plugin '@tailwindcss/typography';
 
 @layer base {
@@ -90,7 +92,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-.welcome-prose {
+.survey-prose {
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);
   --tw-prose-lead: var(--muted-foreground);
@@ -111,26 +113,26 @@
   color: var(--foreground);
 }
 
-.welcome-prose :where(h1, h2, h3, h4) {
+.survey-prose :where(h1, h2, h3, h4) {
   font-family: inherit;
   margin-bottom: 0.5rem;
   margin-top: 1rem;
 }
 
-.welcome-prose :where(p, ul, ol, blockquote, pre, table) {
+.survey-prose :where(p, ul, ol, blockquote, pre, table) {
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
 }
 
-.welcome-prose :where(li) {
+.survey-prose :where(li) {
   margin-bottom: 0.125rem;
   margin-top: 0.125rem;
 }
 
-.welcome-prose > :first-child {
+.survey-prose > :first-child {
   margin-top: 0;
 }
 
-.welcome-prose > :last-child {
+.survey-prose > :last-child {
   margin-bottom: 0;
 }
