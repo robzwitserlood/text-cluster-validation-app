@@ -36,7 +36,7 @@ import {
   sessionAssignmentPath,
   sessionAssignmentsDir,
 } from '../lib/paths';
-import { listSafe, writeOnce, type StorageEntry, type VolumeStorage } from '../lib/storage';
+import { listSafe, writeOnce, type S3Storage } from '../lib/storage';
 import type { AckSegment } from '../lib/http';
 import type {
   ClusterIntrusionItem,
@@ -61,7 +61,7 @@ export interface SessionAssignment {
 
 /** Dependencies shared by the session/response services. */
 export interface ServiceContext {
-  storage: VolumeStorage;
+  storage: S3Storage;
   studyId: string;
   study: Study;
   /**
@@ -188,7 +188,7 @@ export async function ensureAssignment(ctx: ServiceContext, participantId: strin
   return (await readAssignment(storage, path)) ?? assignment;
 }
 
-async function readAssignment(storage: VolumeStorage, path: string): Promise<SessionAssignment | null> {
+async function readAssignment(storage: S3Storage, path: string): Promise<SessionAssignment | null> {
   try {
     return JSON.parse(await storage.read(path)) as SessionAssignment;
   } catch {
@@ -208,11 +208,8 @@ async function pickLeastUtilizedSession(ctx: ServiceContext): Promise<string> {
   const counts = new Map<string, number>();
   for (const session of study.sessions) counts.set(session.sessionId, 0);
 
-  const entries = await listSafe(storage, sessionAssignmentsDir(studyId));
-  const assignmentPaths = entries.flatMap((entry) => {
-    if (entry.is_directory || !entry.name) return [];
-    return [`${sessionAssignmentsDir(studyId)}/${entry.name}`];
-  });
+  const keys = await listSafe(storage, sessionAssignmentsDir(studyId));
+  const assignmentPaths = keys;
 
   // Volume reads are remote requests. Process them concurrently in bounded batches instead of
   // serially; the cap prevents a large study from flooding the Files API.
@@ -260,10 +257,10 @@ async function mapWithConcurrency<T, U>(
 
 /** The set of real item ids the participant has already answered. */
 export async function listAnsweredItemIds(ctx: ServiceContext, participantId: string): Promise<Set<string>> {
-  const entries = await listSafe(ctx.storage, responsesDir(ctx.studyId, participantId));
+  const keys = await listSafe(ctx.storage, responsesDir(ctx.studyId, participantId));
   const answered = new Set<string>();
-  for (const entry of entries) {
-    const id = entryFileId(entry);
+  for (const key of keys) {
+    const id = keyFileId(key);
     if (id) answered.add(id);
   }
   return answered;
@@ -271,10 +268,10 @@ export async function listAnsweredItemIds(ctx: ServiceContext, participantId: st
 
 /** The set of practice ids the participant has already attempted. */
 export async function listPracticeResponseIds(ctx: ServiceContext, participantId: string): Promise<Set<string>> {
-  const entries = await listSafe(ctx.storage, practiceResponsesDir(ctx.studyId, participantId));
+  const keys = await listSafe(ctx.storage, practiceResponsesDir(ctx.studyId, participantId));
   const present = new Set<string>();
-  for (const entry of entries) {
-    const id = entryFileId(entry);
+  for (const key of keys) {
+    const id = keyFileId(key);
     if (id) present.add(id);
   }
   return present;
@@ -290,9 +287,9 @@ function countAnsweredPractice(practiceIds: string[], present: Set<string>): num
 }
 
 /** Extract the file id (basename without `.json`) from a directory entry. */
-function entryFileId(entry: StorageEntry): string | null {
-  if (entry.is_directory) return null;
-  const name = entry.name ?? entry.path?.split('/').pop();
+function keyFileId(key: string): string | null {
+  const parts = key.split('/');
+  const name = parts[parts.length - 1];
   if (!name) return null;
   return name.endsWith('.json') ? name.slice(0, -'.json'.length) : name;
 }

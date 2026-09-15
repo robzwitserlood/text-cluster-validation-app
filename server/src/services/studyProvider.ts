@@ -8,11 +8,11 @@
  */
 
 import { loadStudy, type Study } from './studyLoader';
-import type { VolumeStorage } from '../lib/storage';
+import type { S3Storage } from '../lib/storage';
 
 export type StudyProvider = () => Promise<Study>;
 
-export function createStudyProvider(storage: VolumeStorage, studyId: string): StudyProvider {
+export function createStudyProvider(storage: S3Storage, studyId: string): StudyProvider {
   let cached: Promise<Study> | null = null;
 
   return function getStudy(): Promise<Study> {

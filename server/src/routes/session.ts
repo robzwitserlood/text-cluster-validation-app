@@ -7,23 +7,23 @@
  * it. Errors are generic and PII-free (R10).
  */
 
-import type { IAppRouter } from '@databricks/appkit';
+import type { Express } from 'express';
 import { isValidParticipantId } from '../../../shared/schemas';
 import type { Locale } from '../../../shared/i18n';
 import { parseAcknowledgedInstructions, sendError } from '../lib/http';
 import { getSessionState } from '../services/sessionService';
-import type { VolumeStorage } from '../lib/storage';
+import type { S3Storage } from '../lib/storage';
 import type { StudyProvider } from '../services/studyProvider';
 
 export interface RouteDeps {
-  storage: VolumeStorage;
+  storage: S3Storage;
   studyId: string;
   getStudy: StudyProvider;
   /** Deployment UI language, used only for the server-supplied default welcome copy (US1, FR-012). */
   language?: Locale;
 }
 
-export function registerSessionRoutes(app: IAppRouter, deps: RouteDeps): void {
+export function registerSessionRoutes(app: Express, deps: RouteDeps): void {
   app.get('/api/session', async (req, res) => {
     const participantId = req.header('X-Participant-Id');
     if (!isValidParticipantId(participantId)) return sendError(res, 400, 'invalid_participant');

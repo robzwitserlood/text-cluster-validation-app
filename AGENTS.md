@@ -1,21 +1,11 @@
 # AI Assistant Instructions
 
-<!-- appkit-instructions-start -->
-
-## Databricks AppKit
-
-This project uses Databricks AppKit packages. For AI assistant guidance on using these packages, refer to:
-
-- **@databricks/appkit** (Backend SDK): [./node_modules/@databricks/appkit/CLAUDE.md](./node_modules/@databricks/appkit/CLAUDE.md)
-- **@databricks/appkit-ui** (UI Integration, Charts, Tables, SSE, and more.): [./node_modules/@databricks/appkit-ui/CLAUDE.md](./node_modules/@databricks/appkit-ui/CLAUDE.md)
-
-<!-- appkit-instructions-end -->
-
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`specs/007-plain-cluster-terms-list/plan.md` (and its research.md,
+`specs/008-personal-demo-refactor/plan.md` (and its research.md,
 data-model.md, and quickstart.md). For the features it builds on, see
+`specs/007-plain-cluster-terms-list/plan.md`,
 `specs/006-cluster-terms-list-display/plan.md`,
 `specs/005-responsive-loading/plan.md`,
 `specs/003-survey-copy-house-style/plan.md`,

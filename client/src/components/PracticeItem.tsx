@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Badge, Button } from '@databricks/appkit-ui/react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { GraduationCap } from 'lucide-react';
 import type { ClientPracticeItem, Selection } from '../../../shared/types';
 import { useMessages, useTranslate } from '@/lib/i18n-context';

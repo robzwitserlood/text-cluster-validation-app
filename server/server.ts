@@ -1,57 +1,83 @@
-import { createApp, files, getExecutionContext, server } from '@databricks/appkit';
 import express from 'express';
-import { createServicePrincipalStorage } from './src/lib/servicePrincipalStorage';
-import { parseSurveyLanguage } from './src/lib/config';
+import { createScalewayStorage } from './src/lib/scalewayStorage';
+import { validateConfig } from './src/lib/config';
 import { createStudyProvider } from './src/services/studyProvider';
 import { registerSessionRoutes, type RouteDeps } from './src/routes/session';
 import { registerResponseRoutes } from './src/routes/responses';
 import { registerDebriefRoutes } from './src/routes/debrief';
 
-const appkit = await createApp({
-  plugins: [files(), server({ autoStart: false })],
-});
+const startTime = Date.now();
 
-// One deployment serves exactly one Study, named by STUDY_ID (FR-017). All storage paths are
-// server-built under text_cluster_validation/${STUDY_ID}/ — never from a client path segment.
-const studyId = process.env.STUDY_ID;
-if (!studyId) {
-  throw new Error("STUDY_ID is not configured. Set STUDY_ID to this deployment's Study id (FR-017).");
-}
+try {
+  const config = validateConfig();
+  const storage = createScalewayStorage({
+    endpoint: config.endpoint,
+    region: config.region,
+    bucket: config.bucket,
+  });
 
-// Service-principal Volume access with server-enforced path isolation (R9). The AppKit Files
-// *plugin* enforces OBO (`asUser(req)`) and throws when called as the service principal, so this
-// deployment talks to the Volume directly as its service principal via this adapter instead.
-const storage = createServicePrincipalStorage(process.env.DATABRICKS_VOLUME_FILES);
-const getStudy = createStudyProvider(storage, studyId);
-
-// App-wide UI language for built-in strings (built-in chrome only, never task items; FR-013–FR-015).
-// Unset/invalid values fall back to 'en'. Passed to the session service for the default welcome copy.
-const language = parseSurveyLanguage(process.env);
-
-const routeDeps: RouteDeps = { storage, studyId, getStudy, language };
-
-appkit.server.extend((app) => {
+  const app = express();
   app.use(express.json());
 
-  registerSessionRoutes(app, routeDeps);
-  registerResponseRoutes(app, routeDeps);
-  registerDebriefRoutes(app, routeDeps);
+  let studyLoaded = false;
+  try {
+    const getStudy = createStudyProvider(storage, config.studyId);
+    await getStudy();
+    studyLoaded = true;
 
-  // Optional study-owner identity endpoint (not used by the participant flow; FR-013).
-  app.get('/api/current-user', (req, res) => {
-    const forwardedUser = req.header('x-forwarded-user') ?? null;
-    const forwardedEmail = req.header('x-forwarded-email') ?? null;
-    const forwardedName = req.header('x-forwarded-user-name') ?? req.header('x-forwarded-preferred-username') ?? null;
-    const context = getExecutionContext();
-    const fallbackId = 'serviceUserId' in context ? context.serviceUserId : context.userId;
+    const routeDeps: RouteDeps = { storage, studyId: config.studyId, getStudy, language: config.language };
+    registerSessionRoutes(app, routeDeps);
+    registerResponseRoutes(app, routeDeps);
+    registerDebriefRoutes(app, routeDeps);
+  } catch (err) {
+    console.error('[server] Study load failed:', err instanceof Error ? err.message : err);
+    console.error('[server] Starting in degraded mode — serving error page for all routes.');
+  }
 
+  app.get('/api/health', (_req, res) => {
     res.json({
-      id: forwardedUser ?? fallbackId,
-      email: forwardedEmail,
-      name: forwardedName ?? forwardedEmail ?? forwardedUser ?? fallbackId,
-      isUserContext: forwardedUser !== null,
+      status: studyLoaded ? 'ok' : 'degraded',
+      studyId: config.studyId,
+      uptime: Date.now() - startTime,
     });
   });
-});
 
-await appkit.server.start();
+  if (!studyLoaded) {
+    app.use((_req, res) => {
+      res.status(503).type('html').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Survey Unavailable</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #fafafa; color: #333; }
+    .box { max-width: 520px; padding: 2rem; text-align: center; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    p { color: #555; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Survey Unavailable</h1>
+    <p>The study could not be loaded. Please check that the study file exists in the configured Scaleway bucket and that the bucket is publicly accessible.</p>
+    <p style="font-size:0.875rem;color:#888;">Study ID: ${config.studyId}</p>
+  </div>
+</body>
+</html>`);
+    });
+  } else if (process.env.NODE_ENV === 'production') {
+    app.use(express.static('client/dist'));
+    app.get('*', (_req, res) => {
+      res.sendFile('index.html', { root: 'client/dist' });
+    });
+  }
+
+  app.listen(config.port, () => {
+    console.log(`[server] Running at http://localhost:${config.port}`);
+    console.log(`[server] Study: ${config.studyId} | Language: ${config.language}`);
+  });
+} catch (err) {
+  console.error('[server] Fatal startup error:', err instanceof Error ? err.message : err);
+  process.exit(1);
+}

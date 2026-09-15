@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@databricks/appkit-ui/react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
 import { Debrief } from '@/components/Debrief';
 import { LoadingMessage } from '@/components/LoadingMessage';

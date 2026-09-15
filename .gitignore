@@ -4,7 +4,6 @@ client/dist/
 client/dist-*/
 dist/
 build/
-.env
 .databricks/
 .smoke-test/
 .claude/
@@ -33,3 +32,4 @@ website-startanalyse-aardgasvrije-buurten-main/
 
 # Auto-generated types (endpoint-specific, varies per developer)
 shared/appkit-types/serving.d.ts
+node_modules

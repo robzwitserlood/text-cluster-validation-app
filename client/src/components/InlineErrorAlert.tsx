@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Alert, AlertDescription } from '@databricks/appkit-ui/react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export interface InlineErrorAlertProps {
   children: ReactNode;
